@@ -51,7 +51,7 @@ ps: 每一排对应单个对局，务必换行
         <div class="box">
           <h3>对局结果输出区</h3>
           <textarea name="" id="historyTextArea" cols="80" rows="20" readonly></textarea>
-          <div style="font-size: 0;"><a id="exportBtn" download="record.json" href="javascript:void(0);">导出json</a></div>
+          <div style="font-size: 0;"><a id="exportBtn" download="record.json" href="javascript:void(0);">导出JSON</a></div>
           <div>
             <p>游戏说明：</p>
             <ul>
@@ -108,6 +108,7 @@ ps: 每一排对应单个对局，务必换行
         showWinRecord(curRound, whoWin) {
           let template = `第${curRound}局最终赢家：${whoWin === 0 ? "Leon" : "Judy"}\n`;
           this.element.historyTextArea.value += template;
+          this.element.historyTextArea.scrollTop = this.element.historyTextArea.scrollHeight;
         },
         // 展示出谁赢的logo
         showWhoWinCurRound(who) {
