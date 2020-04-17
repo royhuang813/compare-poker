@@ -1,0 +1,102 @@
+@import "./animate.min.css";
+* {
+  padding: 0;
+  margin: 0;
+  color: #353535;
+  list-style-type: none;
+  box-sizing: border-box;
+}
+button:hover {
+  cursor: pointer;
+}
+.card {
+  width: 130px;
+  height: 158px;
+  background: url("../assets/poker.png") no-repeat;
+  background-size: 2120px 750px;
+  border-radius: 10px;
+  box-shadow: 0 0 6px 2px #00000010;
+}
+#main {
+  padding: 20px 50px 10px;
+  height: 100%;
+  background-color: #f9f9f9;
+}
+#main::after {
+  content: "Copyright © 2020 Powered by www.hxuesong.com";
+  display: block;
+  padding: 10px 0 0;
+  color: #bbb;
+  font-size: 14px;
+  text-align: right;
+}
+h1 {
+  text-align: center;
+}
+#nav {
+  padding: 30px 0;
+  margin: 0 auto;
+  width: 360px;
+}
+#nav .nav-list {
+  display: flex;
+  justify-content: space-around;
+}
+#nav .nav-list .nav-item button {
+  padding: 1px 0;
+  width: 100px;
+}
+.container {
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+}
+.container .box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 40%;
+  height: 240px;
+  text-align: center;
+}
+.container .box .card-list {
+  display: flex;
+  justify-content: space-around;
+}
+.container .box .win {
+  position: absolute;
+  top: -90px;
+  left: 70px;
+  width: 250px;
+}
+.bottom {
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  margin: 30px 0 0;
+  box-shadow: 0 0 4px 1px #00000010;
+}
+.bottom .box {
+  text-align: center;
+}
+.bottom .box textarea {
+  margin: 20px 0;
+  resize: none;
+}
+.bottom .box button {
+  display: block;
+  margin: 0 auto 10px;
+  width: 100px;
+}
+.bottom .box #exportBtn {
+  display: inline-block;
+  padding: 0px 20px;
+  margin: 0 0 50px;
+  font-size: 12px;
+  border: 1px solid #eee;
+  background-color: #fff;
+  border-radius: 4px;
+  text-decoration: none;
+}

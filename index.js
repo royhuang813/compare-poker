@@ -24,6 +24,7 @@ for (let i = 0; i < roundCount; i++) {
             let compareColor = getCompareColor(leonPokerStr, judyPokerStr);
             if (compareColor === 0) {
                 console.log('最终赢家:', '平局')
+                result[i] = 'dogfall'
             } else {
                 result[i] = compareColor === 1 ? 'leon' : 'judy'
                 console.log('最终赢家:', result[i])

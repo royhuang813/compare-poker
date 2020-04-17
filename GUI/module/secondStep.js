@@ -3,7 +3,7 @@
  * @param {number[], number[]} leonScoreArr, JudyScoreArr
  * @return {number} 0: 一样大； 1: leon大； 2: judy大
  */
-exports.getCompareNums = function (leonScoreArr, judyScoreArr) {
+export const getCompareNums = function (leonScoreArr, judyScoreArr) {
     console.log('各自卡牌面值分数(leon、judy):', leonScoreArr, judyScoreArr)
     // 此方案有bug，只适用于所有数字都是同样位数
     // let leonNum = +leonScoreArr.join('');
