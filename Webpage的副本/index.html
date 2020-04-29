@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Game #1 - Poker</title>
+    <link rel="stylesheet" href="./static/index.css" />
+    <link rel="stylesheet" href="./static/poker.css" />
+  </head>
+  <body>
+    <main id="main">
+      <h1>扑克牌 - 比大小</h1>
+      <nav id="nav">
+        <ul class="nav-list">
+          <li class="nav-item"><button id="startGame" disabled>开始对局</button></li>
+          <li class="nav-item"><button id="pauseGame" disabled>游戏暂停</button></li>
+          <!-- <li class="nav-item"><button id="resetGame">重置</button></li> -->
+        </ul>
+      </nav>
+      <div class="container">
+        <div class="box">
+          <h2>Leon</h2>
+          <!-- <p>梅花10，方片5，黑桃7，红桃J，红桃8</p> -->
+          <ul class="card-list"></ul>
+        </div>
+        <div class="box">
+          <h2>Judy</h2>
+          <!-- <p>梅花10，方片5，黑桃7，红桃J，红桃8</p> -->
+          <ul class="card-list"></ul>
+        </div>
+      </div>
+      <div class="bottom">
+        <div class="box">
+          <h3>对局数据录入区</h3>
+          <textarea name="" id="enterTextArea" cols="80" rows="20" placeholder="请在这里录入对局数据"></textarea>
+          <input type="file" name="" id="fileInput" onchange="handleFiles(this.files)" />
+          <button id="enterBtn">确定录入</button>
+          <p>必须为以下格式(即文档要求)：</p>
+          <pre id="pre">
+
+S10DKHQH9CA;D6SJC2D5D7
+CKH3S4S3DK;C9S8C3CQS7
+H5D6H3C10DA;D10CQDKC7S9
+C4SQD3C2S9;CJH9SKHKD7
+
+ps: 每一排对应单个对局，务必换行
+    </pre
+          >
+        </div>
+        <div class="box">
+          <h3>对局结果输出区</h3>
+          <textarea name="" id="historyTextArea" cols="80" rows="20" readonly></textarea>
+          <div style="font-size: 0;"><a id="exportBtn" download="record.json" href="javascript:void(0);">导出JSON</a></div>
+          <div>
+            <p>游戏说明：</p>
+            <ul>
+              <li>1. 在左侧输入对局数据（须按照示例格式），点击“确定导入”</li>
+              <li>2. 点击上方“开始对局”，程序会自动进行比对并以图形界面展示</li>
+              <li>3. 对比完毕后，可点击“导出JSON”，key为第几局，value为谁赢</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </main>
+    <script>
+      // function handleFiles(files) {
+      //   console.log("e", files);
+      //   if (files.length) {
+      //     let file = files[0];
+      //     let reader = new FileReader();
+      //     reader.onload = function () {
+      //       console.log("object", this.result);
+      //       document.getElementById("pre").innerHTML = this.result;
+      //     };
+      //     reader.readAsText(file);
+      //   }
+      // }
+    </script>
+    <script src="./module/firstStep.js"></script>
+    <script src="./module/secondStep.js"></script>
+    <script src="./module/thirdStep.js"></script>
+    <script src="./module/utils.js"></script>
+    <script>
+      function handleFiles(files) {
+        console.log("e", files);
+        if (files.length) {
+          let file = files[0];
+          let reader = new FileReader();
+          reader.onload = function () {
+            console.log("object", this.result);
+            getEleById("enterTextArea").value = this.result;
+          };
+          reader.readAsText(file);
+        }
+      }
+      let obj = {
+        //元素集
+        element: {
+          startGameBtn: getEleById("startGame"),
+          pauseGameBtn: getEleById("pauseGame"),
+          resetGameBtn: getEleById("resetGame"),
+          enterTextArea: getEleById("enterTextArea"),
+          fileInput: getEleById("fileInput"),
+          historyTextArea: getEleById("historyTextArea"),
+          enterBtn: getEleById("enterBtn"),
+          exportBtn: getEleById("exportBtn"),
+          cardList: getEleByClass("card-list"),
+        },
+        //data集
+        value: {
+          allRoundData: null, //所有对局数据
+          curRound: 0, //当前局数
+          roundCount: 0, //总局数
+          timer: null, //定时器
+          speed: 2000, //定时器速度
+          result: {}, //对局总记录
+        },
+        //初始化
+        init() {
+          this.allEventListener();
+        },
+        // 存放所有结果记录
+        saveDataForDownload() {
+          let data = JSON.stringify(this.value.result);
+          this.element.exportBtn.setAttribute("href", `data:text/json;charset=utf-8,${data}`);
+        },
+        //定时器
+        timer() {
+          this.value.timer = setInterval(() => {
+            this.compareFn();
+          }, this.value.speed);
+        },
+        //累计显示获胜记录
+        showWinRecord(curRound, whoWin) {
+          let template = `第${curRound}局最终赢家：${whoWin === 0 ? "Leon" : whoWin === 1 ? "Judy" : whoWin === 2 ? "dogfall" : "invalid"}\n`;
+          this.element.historyTextArea.value += template;
+          this.element.historyTextArea.scrollTop = this.element.historyTextArea.scrollHeight;
+        },
+        // 展示出谁赢的logo
+        showWhoWinCurRound(who) {
+          let template = `<img class="win animated tada" src="./assets/win.png" alt="" />`;
+          this.element.cardList[who].innerHTML += template;
+        },
+        //实时清空卡片，为下一局准备
+        removeCard(Leon, Judy) {
+          this.element.cardList[Leon].innerHTML = "";
+          this.element.cardList[Judy].innerHTML = "";
+        },
+        // 实时添加卡片元素
+        addCard(who, pokerStr) {
+          // who: 0:代表leon  1:代表Judy
+          let time = 0,
+            start = 0;
+          while (time < 10) {
+            let card = pokerStr.substring(start, start + 3);
+            if (/10/.test(card)) {
+              card = pokerStr.substring(start, start + 3);
+              start += 3;
+            } else {
+              card = pokerStr.substring(start, start + 2);
+              start += 2;
+            }
+            if (card == "") {
+              this.element.cardList[0].innerHTML = "<li>此局数据无效，即将开始下一局</li>";
+              this.element.cardList[1].innerHTML = "<li>此局数据无效，即将开始下一局</li>";
+              return false;
+            } else {
+              let template = `<li class="card-item card ${card} animated zoomIn delay-0${time}s soon"></li>`;
+              this.element.cardList[who].innerHTML += template;
+              time += 2;
+            }
+          }
+          return true;
+        },
+        //处理函数集
+        compareFn() {
+          if (this.value.curRound < this.value.roundCount) {
+            this.removeCard(0, 1);
+            let curRoundDataStr = this.getEachRoundData(this.value.allRoundData, this.value.curRound);
+            let curRoundDataArr = curRoundDataStr.split(";");
+            let leonPokerStr = curRoundDataArr[0]; //string eg: SJHQCKD5H8
+            let judyPokerStr = curRoundDataArr[1];
+            if (!this.addCard(0, leonPokerStr) || !this.addCard(1, judyPokerStr)) {
+              console.log("xzxzczxcxzvczxvzvc");
+              this.value.result[this.value.curRound + 1] = "invalid";
+              this.showWinRecord(this.value.curRound + 1, 3);
+              this.value.curRound++;
+            } else {
+              // this.addCard(0, leonPokerStr);
+              // this.addCard(1, judyPokerStr);
+              let leonScoreArr = getScoreArr(leonPokerStr); //array eg: [10,10,10,5,8]
+              let JudyScoreArr = getScoreArr(judyPokerStr);
+              let leonFinalScore = getFinalScore(findTwoCardsIndex(leonScoreArr), leonScoreArr); //number eg: 3
+              let judyFinalScore = getFinalScore(findTwoCardsIndex(JudyScoreArr), JudyScoreArr);
+              let compareScore = getCompareScore(leonFinalScore, judyFinalScore);
+              if (compareScore === 0) {
+                let compareNums = getCompareNums(leonScoreArr, JudyScoreArr);
+                if (compareNums === 0) {
+                  let compareColor = getCompareColor(leonPokerStr, judyPokerStr);
+                  if (compareColor === 0) {
+                    console.log("最终赢家:", "平局");
+                    this.value.result[this.value.curRound + 1] = "dogfall";
+                  } else {
+                    this.value.result[this.value.curRound + 1] = compareColor === 1 ? "Leon" : "Judy";
+                    console.log("最终赢家:", this.value.result[this.value.curRound + 1]);
+                  }
+                } else {
+                  this.value.result[this.value.curRound + 1] = compareNums === 1 ? "Leon" : "Judy";
+                  console.log("最终赢家:", this.value.result[this.value.curRound + 1]);
+                }
+              } else {
+                this.value.result[this.value.curRound + 1] = compareScore === 1 ? "Leon" : "Judy";
+                console.log("最终赢家:", this.value.result[this.value.curRound + 1]);
+              }
+              let curWhoWin = this.value.result[this.value.curRound + 1];
+              let whoWin = "";
+              if (curWhoWin === "Leon") {
+                whoWin = 0;
+              } else if (curWhoWin === "Judy") {
+                whoWin = 1;
+              } else if (curWhoWin === "dogfall") {
+                whoWin = 2;
+              }
+              this.showWhoWinCurRound(whoWin);
+              this.showWinRecord(this.value.curRound + 1, whoWin);
+              this.value.curRound++;
+            }
+          } else {
+            clearInterval(this.value.timer);
+            this.saveDataForDownload();
+            console.log("循环完毕");
+            console.log("最终结果", this.value.result);
+            this.element.startGameBtn.innerText = "游戏结束";
+            this.element.startGameBtn.setAttribute("disabled", true);
+            this.element.pauseGameBtn.setAttribute("disabled", true);
+            this.element.enterBtn.removeAttribute("disabled");
+            alert("对比结束！");
+          }
+        },
+        // 监听事件汇总
+        allEventListener() {
+          this.getRecord();
+          this.startCompare();
+          this.pauseCompare();
+        },
+        //暂停对决
+        pauseCompare() {
+          this.element.pauseGameBtn.addEventListener("click", () => {
+            clearInterval(this.value.timer);
+            this.element.startGameBtn.innerText = "继续进行";
+            this.element.pauseGameBtn.setAttribute("disabled", true);
+            this.element.startGameBtn.removeAttribute("disabled");
+          });
+        },
+        //开始对决
+        startCompare() {
+          this.element.startGameBtn.addEventListener("click", () => {
+            this.timer();
+            this.element.startGameBtn.innerText = "进行中...";
+            this.element.startGameBtn.setAttribute("disabled", true);
+            this.element.pauseGameBtn.removeAttribute("disabled");
+          });
+        },
+        //获取每一局的记录
+        getEachRoundData(allRoundData, curRound) {
+          return allRoundData[curRound];
+        },
+        //判断数据是否合理，不合理的去除
+        getRightRecord(allRoundDataArr) {
+          let count = 0;
+          // while(){
+
+          //   console.log('axc',)
+          // }
+        },
+        //拆解记录，数组中每一项代表每一局两人的牌，并暂存
+        getRecordBySplit(str) {
+          let allRoundDataArr = str.split("\n");
+          console.log("q", allRoundDataArr);
+          this.value.allRoundData = allRoundDataArr;
+          this.value.curRound = 0;
+          this.value.roundCount = allRoundDataArr.length;
+          this.element.startGameBtn.removeAttribute("disabled");
+          this.element.startGameBtn.innerText = "开始对局";
+          this.element.enterBtn.setAttribute("disabled", true);
+          this.element.historyTextArea.value = "";
+          this.element.exportBtn.setAttribute("href", "javascript:void(0)");
+          alert("录入成功！请点击“开始对局”，程序将自动进行");
+        },
+        //获取对局记录，需按文档要求格式
+        getRecord() {
+          this.element.enterBtn.addEventListener("click", () => {
+            let record = this.element.enterTextArea.value;
+            if (record.trim() === "") {
+              alert("请先上传数据文件");
+            } else {
+              this.getRecordBySplit(record);
+            }
+          });
+        },
+      };
+
+      // start~~~
+      window.onload = function () {
+        obj.init();
+      };
+    </script>
+  </body>
+</html>
